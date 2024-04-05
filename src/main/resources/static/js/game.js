@@ -46,12 +46,18 @@ images.set("Валера счастлив", imageFactory());
 images.set("Даша счастлива", imageFactory());
 images.set("Валера обескуражен", imageFactory());
 images.set("ноутбук", imageFactory())
+images.set("бабушка", imageFactory())
+images.set("мошенник", imageFactory())
+images.set("комната бабушки", imageFactory())
 
 images.get("кафе").src = "/images/background.png";
 images.get("Валера счастлив").src = "/images/valeraHappy.png";
 images.get("Даша счастлива").src = "/images/dashaHappy.png";
 images.get("Валера обескуражен").src = "/images/valeraWTF.png";
 images.get("ноутбук").src = "/images/notebook.png";
+images.get("бабушка").src = "/images/granny.png";
+images.get("мошенник").src = "/images/scammer.png";
+images.get("комната бабушки").src = "/images/grannysRoom.png";
 
 // сцена
 class scene {
@@ -539,20 +545,41 @@ class startScene extends sceneBase {
       dialogue2positive[0] = new line(images.get('Валера счастлив'), "Ты молодец! Грамотно поступил!");
       dialogue2positive[1] = new line(images.get('Даша счастлива'), "Спасибо!", true);
       dialogue2positive[2] = new line(images.get('Валера счастлив'), "У моей бабушки был тоже случай...");
+      dialogue2positive[3] = new line(images.get('Валера обескуражен'), "Ей позвонил мошенник");
+
+      let dialogue3negative = new Array();
+      dialogue3negative[0] = new line(images.get('Даша счастлива'), "Жалко бабушку ((", true);
+      let dialogue3negativeScene = new dialogueScene(images.get('кафе'), dialogue3negative);
+
+      let dialogue3positive = new Array();
+      dialogue3positive[0] = new line(images.get('Даша счастлива'), "Ого! Твоя бабушка крутая!!", true);
+      let dialogue3positiveScene = new dialogueScene(images.get('кафе'), dialogue3positive);
+
+      let storyAboutGrannyAnswers = new Array();
+      storyAboutGrannyAnswers[0] = new gameAnswer('Перевести деньги на указанный счёт', 'Мошенник сбросил трубку, деньги украдены', dialogue3negativeScene, false);
+      storyAboutGrannyAnswers[1] = new gameAnswer('Сбросить трубку и позвонить в сбербанк, уточнить информацию', 'В сбербанке ответили что со счётом всё впорядке, это был мошенник', dialogue3positiveScene, true);
+      let storyAboutGrannyQuestionScene = new questionScene(images.get('комната бабушки'), storyAboutGrannyAnswers);
+
+      let storyAboutGranny = new Array();
+      storyAboutGranny[0] = new line(images.get('бабушка'), 'Алло!');
+      storyAboutGranny[1] = new line(images.get('мошенник'), 'Светлана Сергеевна? Добрый день! Вас беспокоит сбербанк', true);
+      storyAboutGranny[2] = new line(images.get('мошенник'), 'К нам поступила информация о попытке взлома вашего счёта', true);
+      storyAboutGranny[3] = new line(images.get('мошенник'), 'Чтобы предотвратить кражу денег необходимо срочно перевести их на другой счёт', true);
+      storyAboutGranny[4] = new line(images.get('бабушка'), 'Ох батюшки! Сейчас, сейчас...');
+      let storyAboutGrannyScene = new dialogueScene(images.get('комната бабушки'), storyAboutGranny, storyAboutGrannyQuestionScene);
 
       let dialogue2negative= new Array();
       dialogue2negative[0] = new line(images.get('Валера обескуражен'), "Сочуствую...");
       dialogue2negative[1] = new line(images.get('Даша счастлива'), "Ничего страшного, буду по внимательнее", true);
       dialogue2negative[2] = new line(images.get('Валера обескуражен'), "У моей бабушки был тоже случай...");
+      dialogue2negative[3] = new line(images.get('Валера обескуражен'), "Ей позвонил мошенник");
 
       let storyOfTheLetterAnswers = new Array();
-      storyOfTheLetterAnswers[0] = new gameAnswer("Перейти по ссылке, ввести учетные данные, поменять пароль", "С вас снято 100500 миллионов", new dialogueScene(images.get('кафе'), dialogue2negative), false);
-      storyOfTheLetterAnswers[1] = new gameAnswer("Позвонить в банк и уточнить о произошедшем", "Оператор банка ответил что аккаунт в безопасности, это мошенники!", new dialogueScene(images.get('кафе'), dialogue2positive), true);
-      storyOfTheLetterAnswers[2] = new gameAnswer("Ничего не делать", "...", new dialogueScene(images.get('кафе'), dialogue2positive), true);
+      storyOfTheLetterAnswers[0] = new gameAnswer("Перейти по ссылке, ввести учетные данные, поменять пароль", "С вас снято 100500 миллионов", new dialogueScene(images.get('кафе'), dialogue2negative, storyAboutGrannyScene), false);
+      storyOfTheLetterAnswers[1] = new gameAnswer("Позвонить в банк и уточнить о произошедшем", "Оператор банка ответил что аккаунт в безопасности, это мошенники!", new dialogueScene(images.get('кафе'), dialogue2positive, storyAboutGrannyScene), true);
+      storyOfTheLetterAnswers[2] = new gameAnswer("Ничего не делать", "...", new dialogueScene(images.get('кафе'), dialogue2positive, storyAboutGrannyScene), true);
       let testQuestion = new  questionScene(images.get('ноутбук'), storyOfTheLetterAnswers);
       storyOfTheLetterScene.nextScene = testQuestion;
-
-
 
       currentScene = new dialogueScene(images.get('кафе'), startDialogue, storyOfTheLetterScene);
     }

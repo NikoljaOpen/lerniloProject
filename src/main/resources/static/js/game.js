@@ -45,10 +45,14 @@ images.set("кафе", imageFactory());
 images.set("Валера счастлив", imageFactory());
 images.set("Даша счастлива", imageFactory());
 images.set("Валера обескуражен", imageFactory());
-images.set("ноутбук", imageFactory())
-images.set("бабушка", imageFactory())
-images.set("мошенник", imageFactory())
-images.set("комната бабушки", imageFactory())
+images.set("ноутбук", imageFactory());
+images.set("бабушка", imageFactory());
+images.set("мошенник", imageFactory());
+images.set("комната бабушки", imageFactory());
+images.set("Валера звонит", imageFactory());
+images.set("чат", imageFactory());
+images.set("дом", imageFactory());
+images.set("Дима звонит", imageFactory());
 
 images.get("кафе").src = "/images/background.png";
 images.get("Валера счастлив").src = "/images/valeraHappy.png";
@@ -58,6 +62,10 @@ images.get("ноутбук").src = "/images/notebook.png";
 images.get("бабушка").src = "/images/granny.png";
 images.get("мошенник").src = "/images/scammer.png";
 images.get("комната бабушки").src = "/images/grannysRoom.png";
+images.get("Валера звонит").src = "/images/valeraIsСalling.png";
+images.get("чат").src = "/images/chat.png";
+images.get("дом").src = "/images/home.png";
+images.get("Дима звонит").src = "/images/dimaIsCalling.png"
 
 // сцена
 class scene {

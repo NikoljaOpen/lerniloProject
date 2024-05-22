@@ -157,10 +157,9 @@ class gameButton {
 }
 
 class gameAnswer {
-  constructor(text, comment, nextScene, isCorrect){
+  constructor(text, comment, isCorrect = false){
     this.text = text;
     this.comment = comment;
-    this.nextScene = nextScene;
     this.isCorrect = isCorrect;
   }
 }
@@ -192,10 +191,10 @@ class sceneBase extends scene {
 
 // сцена - монолог
 class monologueScene extends sceneBase{
-  constructor(background, monolog){
+  constructor(background){
     super(background);
     // набор реплик монолога
-    this.monolog = monolog;
+    this.monolog = new Array();
     // следующая сцена
     this.nextScene = new scene();
     // подсчёт реплик персонажей
@@ -210,6 +209,10 @@ class monologueScene extends sceneBase{
     this.lineIsOver = false;
     // флаг сцена закончена
     this.sceneIsOver = false;
+  }
+
+  AddLine(message){
+    this.monolog.push(message);
   }
 
   // отрисовать реплику
@@ -270,10 +273,10 @@ class monologueScene extends sceneBase{
 }
 
 class questionScene extends sceneBase{
-  constructor(background, answers){
+  constructor(background){
     super(background);
     // вопросы
-    this.answers = answers;
+    this.answers = new Array();
 
     this.padding = window.innerWidth * 0.05;
 
@@ -285,16 +288,24 @@ class questionScene extends sceneBase{
 
     this.buttonsHeight = this.buttonsPadding * 2 + 18 * 2;
 
-    this.buttons = new Array();
-    this.buttons[0] = new gameButton(this.padding, answers[0].text);
-    for(let i = 1; i < answers.length; i++){
-      this.buttons[i] = new gameButton(this.distanceBetweenButtons + this.buttons[i-1].y + this.buttonsHeight, answers[i].text);
-    }
+    this.nextPositiveScene = null;
+    this.nextNegativeScene = null;
 
+    this.buttons = new Array();
     this.answerIsSelected = false;
     this.selectedAnswerNumber = -1;
     this.answerIsCorrect = false;
     this.sceneIsOver = false;
+  }
+
+  AddAnswer(text, comment, isCorrect = false){
+    this.answers.push(new gameAnswer(text, comment, isCorrect));
+    if(this.answers.length == 1)
+      this.buttons.push(new gameButton(this.padding, this.answers[0].text));
+    else{
+      let i = this.answers.length - 1;
+      this.buttons.push(new gameButton(this.distanceBetweenButtons + this.buttons[i-1].y + this.buttonsHeight, this.answers[i].text));
+    }
   }
 
   drawButtons(){
@@ -336,7 +347,11 @@ class questionScene extends sceneBase{
 
   onClick(x, y){
     if(this.sceneIsOver) {
-      currentScene = this.answers[this.selectedAnswerNumber].nextScene;
+      //currentScene = this.answers[this.selectedAnswerNumber].nextScene;
+      if(this.answers[this.selectedAnswerNumber].isCorrect)
+        currentScene = this.nextPositiveScene;
+      else
+        currentScene = this.nextNegativeScene;
       return;
     }
     
@@ -364,12 +379,12 @@ class questionScene extends sceneBase{
 
 // диалог - сцена
 class dialogueScene extends sceneBase {
-  constructor(background, dialogue, nextScene = null){
+  constructor(background){
     super(background);
     // диалог
-    this.dialogue = dialogue;
+    this.dialogue = new Array();
     // следующая сцена
-    this.nextScene = nextScene;
+    this.nextScene = null;
     // подсчёт реплик персонажей
     this.lineCount = 0;
     // подсчёт символов в реплике (для плавного, посимвольного отображения реплики)
@@ -382,6 +397,10 @@ class dialogueScene extends sceneBase {
     this.lineIsOver = false;
     // флаг сцена закончена
     this.sceneIsOver = false;
+  }
+
+  AddLine(image, message, isOnRight = false){
+    this.dialogue.push(new line(images.get(image), message, isOnRight));
   }
 
   // нарисовать персонажа
@@ -535,61 +554,99 @@ class startScene extends sceneBase {
       this.messageIsOver = false;
     }
     else if(this.sceneIsOver){
-      let startDialogue = new Array();
-      startDialogue[0] = new line(images.get('Валера счастлив'), 'Привет,что нового у тебя случилось на этой неделе?');
-      startDialogue[1] = new line(images.get('Даша счастлива'), 'Мне написали письмо мошенники, представляешь?!', true);
-      startDialogue[2] = new line(images.get('Валера обескуражен'), 'Ого! Как это случилось?');
+      let startScene = new dialogueScene(images.get('кафе'));
+      startScene.AddLine('Валера счастлив', 'Привет,что нового у тебя случилось на этой неделе?');
+      startScene.AddLine('Даша счастлива', 'Мне написали письмо мошенники, представляешь?!', true);
+      startScene.AddLine('Валера обескуражен', 'Ого! Как это случилось?');
+      
+      let storyOfTheLetterScene = new monologueScene(images.get('ноутбук'));
+      startScene.nextScene = storyOfTheLetterScene;
+      storyOfTheLetterScene.AddLine("Я открыл свой ноутбук");
+      storyOfTheLetterScene.AddLine("Решил проверить почту");
+      storyOfTheLetterScene.AddLine("А там письмо из банка: ");
+      storyOfTheLetterScene.AddLine("Ваш аккаунт был взломан!");
+      storyOfTheLetterScene.AddLine("Срочно пройдите по ссылке и восстановите пароль!");
 
-      // история о письме (из банка)
-      let storyOfTheLetter = new Array();
-      storyOfTheLetter[0] = "Я открыл свой ноутбук";
-      storyOfTheLetter[1] = "Решил проверить почту";
-      storyOfTheLetter[2] = "А там письмо из банка: ";
-      storyOfTheLetter[3] = "Ваш аккаунт был взломан!";
-      storyOfTheLetter[4] = "Срочно пройдите по ссылке и восстановите пароль!";
-      let storyOfTheLetterScene = new monologueScene(images.get('ноутбук'), storyOfTheLetter);
+      let storyOfTheLetterQuestions = new  questionScene(images.get('ноутбук'));
+      storyOfTheLetterScene.nextScene = storyOfTheLetterQuestions;
+      storyOfTheLetterQuestions.AddAnswer("Перейти по ссылке, ввести учетные данные, поменять пароль", "С вас снято 100500 миллионов");
+      storyOfTheLetterQuestions.AddAnswer("Позвонить в банк и уточнить о произошедшем", "Оператор банка ответил что аккаунт в безопасности, это мошенники!", true);
+      storyOfTheLetterQuestions.AddAnswer("Ничего не делать", "...", true);
 
-      let dialogue2positive = new Array();
-      dialogue2positive[0] = new line(images.get('Валера счастлив'), "Ты молодец! Грамотно поступил!");
-      dialogue2positive[1] = new line(images.get('Даша счастлива'), "Спасибо!", true);
-      dialogue2positive[2] = new line(images.get('Валера счастлив'), "У моей бабушки был тоже случай...");
-      dialogue2positive[3] = new line(images.get('Валера обескуражен'), "Ей позвонил мошенник");
+      let storyOfTheLetterNegative = new dialogueScene(images.get('кафе'));
+      storyOfTheLetterQuestions.nextNegativeScene = storyOfTheLetterNegative;
+      storyOfTheLetterNegative.AddLine('Валера обескуражен', "Сочуствую...");
+      storyOfTheLetterNegative.AddLine('Даша счастлива', "Ничего страшного, буду по внимательнее", true);
+      storyOfTheLetterNegative.AddLine('Валера обескуражен', "У моей бабушки был тоже случай...");
+      storyOfTheLetterNegative.AddLine('Валера обескуражен', "Ей позвонил мошенник");
 
-      let dialogue3negative = new Array();
-      dialogue3negative[0] = new line(images.get('Даша счастлива'), "Жалко бабушку ((", true);
-      let dialogue3negativeScene = new dialogueScene(images.get('кафе'), dialogue3negative);
+      let storyOfTheLetterPositive = new dialogueScene(images.get('кафе'));
+      storyOfTheLetterQuestions.nextPositiveScene = storyOfTheLetterPositive;
+      storyOfTheLetterPositive.AddLine('Валера счастлив', "Ты молодец! Грамотно поступил!");
+      storyOfTheLetterPositive.AddLine('Даша счастлива', "Спасибо!", true);
+      storyOfTheLetterPositive.AddLine('Валера счастлив', "У моей бабушки был тоже случай...");
+      storyOfTheLetterPositive.AddLine('Валера обескуражен', "Ей позвонил мошенник");
 
-      let dialogue3positive = new Array();
-      dialogue3positive[0] = new line(images.get('Даша счастлива'), "Ого! Твоя бабушка крутая!!", true);
-      let dialogue3positiveScene = new dialogueScene(images.get('кафе'), dialogue3positive);
+      let storyAboutGranny = new dialogueScene(images.get('комната бабушки'));
+      storyOfTheLetterNegative.nextScene = storyAboutGranny;
+      storyOfTheLetterPositive.nextScene = storyAboutGranny;
+      storyAboutGranny.AddLine('бабушка', 'Алло!');
+      storyAboutGranny.AddLine('мошенник', 'Светлана Сергеевна? Добрый день! Вас беспокоит сбербанк', true);
+      storyAboutGranny.AddLine('мошенник', 'К нам поступила информация о попытке взлома вашего счёта', true);
+      storyAboutGranny.AddLine('мошенник', 'Чтобы предотвратить кражу денег необходимо срочно перевести их на другой счёт', true);
+      storyAboutGranny.AddLine('бабушка', 'Ох батюшки! Сейчас, сейчас...');
 
-      let storyAboutGrannyAnswers = new Array();
-      storyAboutGrannyAnswers[0] = new gameAnswer('Перевести деньги на указанный счёт', 'Мошенник сбросил трубку, деньги украдены', dialogue3negativeScene, false);
-      storyAboutGrannyAnswers[1] = new gameAnswer('Сбросить трубку и позвонить в сбербанк, уточнить информацию', 'В сбербанке ответили что со счётом всё впорядке, это был мошенник', dialogue3positiveScene, true);
-      let storyAboutGrannyQuestionScene = new questionScene(images.get('комната бабушки'), storyAboutGrannyAnswers);
+      let storyAboutGrannyQuestions = new questionScene(images.get('комната бабушки'));
+      storyAboutGranny.nextScene = storyAboutGrannyQuestions;
+      storyAboutGrannyQuestions.AddAnswer('Перевести деньги на указанный счёт', 'Мошенник сбросил трубку, деньги украдены', false);
+      storyAboutGrannyQuestions.AddAnswer('Сбросить трубку и позвонить в сбербанк, уточнить информацию', 'В сбербанке ответили что со счётом всё впорядке, это был мошенник', true);
 
-      let storyAboutGranny = new Array();
-      storyAboutGranny[0] = new line(images.get('бабушка'), 'Алло!');
-      storyAboutGranny[1] = new line(images.get('мошенник'), 'Светлана Сергеевна? Добрый день! Вас беспокоит сбербанк', true);
-      storyAboutGranny[2] = new line(images.get('мошенник'), 'К нам поступила информация о попытке взлома вашего счёта', true);
-      storyAboutGranny[3] = new line(images.get('мошенник'), 'Чтобы предотвратить кражу денег необходимо срочно перевести их на другой счёт', true);
-      storyAboutGranny[4] = new line(images.get('бабушка'), 'Ох батюшки! Сейчас, сейчас...');
-      let storyAboutGrannyScene = new dialogueScene(images.get('комната бабушки'), storyAboutGranny, storyAboutGrannyQuestionScene);
+      let storyAboutGrannyPositive = new dialogueScene(images.get('кафе'));
+      storyAboutGrannyQuestions.nextPositiveScene = storyAboutGrannyPositive;
+      storyAboutGrannyPositive.AddLine('Даша счастлива', "Ого! Твоя бабушка крутая!!", true);
+      storyAboutGrannyPositive.AddLine('Даша счастлива', "У моего друга была похожая ситуация на днях", true);
 
-      let dialogue2negative= new Array();
-      dialogue2negative[0] = new line(images.get('Валера обескуражен'), "Сочуствую...");
-      dialogue2negative[1] = new line(images.get('Даша счастлива'), "Ничего страшного, буду по внимательнее", true);
-      dialogue2negative[2] = new line(images.get('Валера обескуражен'), "У моей бабушки был тоже случай...");
-      dialogue2negative[3] = new line(images.get('Валера обескуражен'), "Ей позвонил мошенник");
+      let storyAboutGrannyNegative = new dialogueScene(images.get('кафе'));
+      storyAboutGrannyQuestions.nextNegativeScene = storyAboutGrannyNegative;
+      storyAboutGrannyNegative.AddLine('Даша счастлива', "Жалко бабушку ((", true);
+      storyAboutGrannyNegative.AddLine('Даша счастлива', "У моего друга была похожая ситуация на днях", true);
 
-      let storyOfTheLetterAnswers = new Array();
-      storyOfTheLetterAnswers[0] = new gameAnswer("Перейти по ссылке, ввести учетные данные, поменять пароль", "С вас снято 100500 миллионов", new dialogueScene(images.get('кафе'), dialogue2negative, storyAboutGrannyScene), false);
-      storyOfTheLetterAnswers[1] = new gameAnswer("Позвонить в банк и уточнить о произошедшем", "Оператор банка ответил что аккаунт в безопасности, это мошенники!", new dialogueScene(images.get('кафе'), dialogue2positive, storyAboutGrannyScene), true);
-      storyOfTheLetterAnswers[2] = new gameAnswer("Ничего не делать", "...", new dialogueScene(images.get('кафе'), dialogue2positive, storyAboutGrannyScene), true);
-      let testQuestion = new  questionScene(images.get('ноутбук'), storyOfTheLetterAnswers);
-      storyOfTheLetterScene.nextScene = testQuestion;
+      let storyFriendInNeed = new monologueScene(images.get('чат'));
+      storyAboutGrannyNegative.nextScene = storyFriendInNeed;
+      storyAboutGrannyPositive.nextScene = storyFriendInNeed;
+      storyFriendInNeed.AddLine("Мне написал друг с просьбой о помощи");
 
-      currentScene = new dialogueScene(images.get('кафе'), startDialogue, storyOfTheLetterScene);
+      let storyFriendInNeedQuestions = new questionScene(images.get('чат'));
+      storyFriendInNeed.nextScene = storyFriendInNeedQuestions;
+      storyFriendInNeedQuestions.AddAnswer('Отправить деньги другу', 'Друга взломали, вы отправили деньги мошеннику');
+      storyFriendInNeedQuestions.AddAnswer('Позвонить другу и уточнить, он ли это', 'Друг сказал что его взломали, он восстанавливает доступ', true);
+      storyFriendInNeedQuestions.AddAnswer('Распросить друга и отправить деньги', 'Друга взломали, вы отправили деньги мошеннику');
+
+      let storyFriendInNeedPositive = new dialogueScene(images.get('кафе'));
+      storyFriendInNeedQuestions.nextPositiveScene =  storyFriendInNeedPositive;
+      storyFriendInNeedPositive.AddLine('Валера счастлив', 'Твоего друга не проведёш!');
+      storyFriendInNeedPositive.AddLine('Валера счастлив', 'Моему другу недавно предложили инвестировать');
+
+      let storyFriendInNeedNegative = new dialogueScene(images.get('кафе'));
+      storyFriendInNeedQuestions.nextNegativeScene = storyFriendInNeedNegative;
+      storyFriendInNeedNegative.AddLine('Валера обескуражен', 'Бывает...');
+      storyFriendInNeedNegative.AddLine('Валера счастлив', 'Моему другу недавно предложили инвестировать');
+
+      let investmentStory = new dialogueScene(images.get('дом'));
+      storyFriendInNeedNegative.nextScene = investmentStory;
+      storyFriendInNeedPositive.nextScene = investmentStory;
+      investmentStory.AddLine('Дима звонит', 'Здравствуйте! Хотим вам предложить проинвестировать в нашь проект с доходностью 200%');
+      investmentStory.AddLine('Дима звонит', 'Мы быстро растём, нашь зароботок складывается за счёт уникальной системы рекламы');
+      investmentStory.AddLine('Дима звонит', 'Список инвесторов ограничен, успейте вложиться!');
+
+      let investmentStoryQuestions = new questionScene(images.get('дом'));
+      investmentStory.nextScene = investmentStoryQuestions;
+      investmentStoryQuestions.AddAnswer('Нельзя упускать такую возможность, вложу сразу все деньги!', 'Этой компании не существует, вложенные деньги не вернут');
+      investmentStoryQuestions.AddAnswer('Это подозрительная компания, вложу немного, вдруг заработаю', 'Этой компании не существует, вложенные деньги не вернут');
+      investmentStoryQuestions.AddAnswer('Доходность в 200% явная ложь, сообщу компетентным службам!', 'Вы спасли себя и других людей от мошенников!', true);
+
+
+      currentScene = startScene;
     }
   }
 }

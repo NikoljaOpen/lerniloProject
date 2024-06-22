@@ -7,7 +7,8 @@ let messageBorderColor = '#b7d1d0';
 let messageBackgroundColor = '#eaf9ff';
 let messageFontColor = '#43616B';
 let portraitOrientation = false;
-
+let gameWidth = 0;
+let gameHeight = 0;
 
 // обработка изменения размеров окна
 function onResize(){
@@ -53,6 +54,9 @@ images.set("Валера звонит", imageFactory());
 images.set("чат", imageFactory());
 images.set("дом", imageFactory());
 images.set("Дима звонит", imageFactory());
+images.set("меню", imageFactory());
+images.set("Даша в замешательстве", imageFactory());
+images.set("Даша с телефоном", imageFactory());
 
 images.get("кафе").src = "/images/background.png";
 images.get("Валера счастлив").src = "/images/valeraHappy.png";
@@ -65,7 +69,10 @@ images.get("комната бабушки").src = "/images/grannysRoom.png";
 images.get("Валера звонит").src = "/images/valeraIsСalling.png";
 images.get("чат").src = "/images/chat.png";
 images.get("дом").src = "/images/home.png";
-images.get("Дима звонит").src = "/images/dimaIsCalling.png"
+images.get("Дима звонит").src = "/images/dimaIsCalling.png";
+images.get("меню").src = "/images/menu.png";
+images.get("Даша в замешательстве").src = "/images/DashaIsConfused.png";
+images.get("Даша с телефоном").src = "/images/DashaWithThePhone.png";
 
 // сцена
 class scene {
@@ -176,16 +183,16 @@ class sceneBase extends scene {
   drawBackground(){
     if(this.background == null) return;
     const aspectRatio = this.background.naturalHeight / this.background.naturalWidth;
-    let height = window.innerHeight;
-    let width = height / aspectRatio;
-    if(width < canvas.width){
+    gameHeight = window.innerHeight;
+    gameWidth = gameHeight / aspectRatio;
+    if(gameWidth < canvas.width){
         //canvas.width = width;
     }
     else {
-      canvas.width = width;
+      canvas.width = gameWidth;
     }
-    canvas.height = height;
-    context.drawImage(this.background, 0, 0, width, height);
+    canvas.height = gameHeight;
+    context.drawImage(this.background, 0, 0, gameWidth, gameHeight);
   }
 }
 
@@ -499,7 +506,7 @@ class startScene extends sceneBase {
   constructor(){
     super(images.get('кафе'));
     // реплики
-    this.characterMessage = ["Как-то раз, два закодычных друга, Валера и Боря решили встретится"]
+    this.characterMessage = ["Как-то раз два закадычных друга, Валера и Даша, решили встретиться"]
     // счётчик реплик
     this.messageCount = 0;
     // "снимок" реплики персонажа для посимвольной анимации
@@ -511,7 +518,7 @@ class startScene extends sceneBase {
     // флаг конца реплики
     this.messageIsOver = false;
     // флаг конца сцены
-    this.sceneIsOver = true;
+    this.sceneIsOver = false;
   }
 
   drawMessage(){
@@ -553,9 +560,19 @@ class startScene extends sceneBase {
       this.charCount = 0;
       this.messageIsOver = false;
     }
+    else if(!this.sceneIsOver && !this.messageIsOver){
+      this.charCount = this.characterMessage[this.messageCount].length;
+      this.messageSnapshot = this.characterMessage[this.messageCount];
+      if (this.messageCount + 1 < characterMessage.length) {
+        this.messageIsOver = true;
+      }
+      else{
+        this.sceneIsOver = true;
+      }
+    }
     else if(this.sceneIsOver){
       let startScene = new dialogueScene(images.get('кафе'));
-      startScene.AddLine('Валера счастлив', 'Привет,что нового у тебя случилось на этой неделе?');
+      startScene.AddLine('Валера счастлив', 'Привет! Что нового у тебя случилось на этой неделе?');
       startScene.AddLine('Даша счастлива', 'Мне написали письмо мошенники, представляешь?!', true);
       startScene.AddLine('Валера обескуражен', 'Ого! Как это случилось?');
       
@@ -569,14 +586,14 @@ class startScene extends sceneBase {
 
       let storyOfTheLetterQuestions = new  questionScene(images.get('ноутбук'));
       storyOfTheLetterScene.nextScene = storyOfTheLetterQuestions;
-      storyOfTheLetterQuestions.AddAnswer("Перейти по ссылке, ввести учетные данные, поменять пароль", "С вас снято 100500 миллионов");
-      storyOfTheLetterQuestions.AddAnswer("Позвонить в банк и уточнить о произошедшем", "Оператор банка ответил что аккаунт в безопасности, это мошенники!", true);
+      storyOfTheLetterQuestions.AddAnswer("Перейти по ссылке, ввести учетные данные, поменять пароль", "У вас украли деньги!");
+      storyOfTheLetterQuestions.AddAnswer("Позвонить в банк и уточнить о произошедшем", "Оператор банка ответил что аккаунт в безопасности, это были мошенники", true);
       storyOfTheLetterQuestions.AddAnswer("Ничего не делать", "...", true);
 
       let storyOfTheLetterNegative = new dialogueScene(images.get('кафе'));
       storyOfTheLetterQuestions.nextNegativeScene = storyOfTheLetterNegative;
       storyOfTheLetterNegative.AddLine('Валера обескуражен', "Сочуствую...");
-      storyOfTheLetterNegative.AddLine('Даша счастлива', "Ничего страшного, буду по внимательнее", true);
+      storyOfTheLetterNegative.AddLine('Даша счастлива', "Ничего страшного, буду повнимательнее", true);
       storyOfTheLetterNegative.AddLine('Валера обескуражен', "У моей бабушки был тоже случай...");
       storyOfTheLetterNegative.AddLine('Валера обескуражен', "Ей позвонил мошенник");
 
@@ -593,7 +610,7 @@ class startScene extends sceneBase {
       storyAboutGranny.AddLine('бабушка', 'Алло!');
       storyAboutGranny.AddLine('мошенник', 'Светлана Сергеевна? Добрый день! Вас беспокоит сбербанк', true);
       storyAboutGranny.AddLine('мошенник', 'К нам поступила информация о попытке взлома вашего счёта', true);
-      storyAboutGranny.AddLine('мошенник', 'Чтобы предотвратить кражу денег необходимо срочно перевести их на другой счёт', true);
+      storyAboutGranny.AddLine('мошенник', 'Чтобы предотвратить кражу денег, необходимо срочно перевести их на другой счёт', true);
       storyAboutGranny.AddLine('бабушка', 'Ох батюшки! Сейчас, сейчас...');
 
       let storyAboutGrannyQuestions = new questionScene(images.get('комната бабушки'));
@@ -604,12 +621,12 @@ class startScene extends sceneBase {
       let storyAboutGrannyPositive = new dialogueScene(images.get('кафе'));
       storyAboutGrannyQuestions.nextPositiveScene = storyAboutGrannyPositive;
       storyAboutGrannyPositive.AddLine('Даша счастлива', "Ого! Твоя бабушка крутая!!", true);
-      storyAboutGrannyPositive.AddLine('Даша счастлива', "У моего друга была похожая ситуация на днях", true);
+      storyAboutGrannyPositive.AddLine('Даша счастлива', "У моего друга недавно была похожая ситуация", true);
 
       let storyAboutGrannyNegative = new dialogueScene(images.get('кафе'));
       storyAboutGrannyQuestions.nextNegativeScene = storyAboutGrannyNegative;
       storyAboutGrannyNegative.AddLine('Даша счастлива', "Жалко бабушку ((", true);
-      storyAboutGrannyNegative.AddLine('Даша счастлива', "У моего друга была похожая ситуация на днях", true);
+      storyAboutGrannyNegative.AddLine('Даша счастлива', "У моего друга недавно была похожая ситуация", true);
 
       let storyFriendInNeed = new monologueScene(images.get('чат'));
       storyAboutGrannyNegative.nextScene = storyFriendInNeed;
@@ -624,7 +641,7 @@ class startScene extends sceneBase {
 
       let storyFriendInNeedPositive = new dialogueScene(images.get('кафе'));
       storyFriendInNeedQuestions.nextPositiveScene =  storyFriendInNeedPositive;
-      storyFriendInNeedPositive.AddLine('Валера счастлив', 'Твоего друга не проведёш!');
+      storyFriendInNeedPositive.AddLine('Валера счастлив', 'Твоего друга не проведёшь!');
       storyFriendInNeedPositive.AddLine('Валера счастлив', 'Моему другу недавно предложили инвестировать');
 
       let storyFriendInNeedNegative = new dialogueScene(images.get('кафе'));
@@ -635,8 +652,8 @@ class startScene extends sceneBase {
       let investmentStory = new dialogueScene(images.get('дом'));
       storyFriendInNeedNegative.nextScene = investmentStory;
       storyFriendInNeedPositive.nextScene = investmentStory;
-      investmentStory.AddLine('Дима звонит', 'Здравствуйте! Хотим вам предложить проинвестировать в нашь проект с доходностью 200%');
-      investmentStory.AddLine('Дима звонит', 'Мы быстро растём, нашь зароботок складывается за счёт уникальной системы рекламы');
+      investmentStory.AddLine('Дима звонит', 'Здравствуйте! Хотим вам предложить проинвестировать в наш проект с доходностью 200%');
+      investmentStory.AddLine('Дима звонит', 'Мы быстро растём, наш заработок складывается за счёт уникальной системы рекламы');
       investmentStory.AddLine('Дима звонит', 'Список инвесторов ограничен, успейте вложиться!');
 
       let investmentStoryQuestions = new questionScene(images.get('дом'));
@@ -645,10 +662,102 @@ class startScene extends sceneBase {
       investmentStoryQuestions.AddAnswer('Это подозрительная компания, вложу немного, вдруг заработаю', 'Этой компании не существует, вложенные деньги не вернут');
       investmentStoryQuestions.AddAnswer('Доходность в 200% явная ложь, сообщу компетентным службам!', 'Вы спасли себя и других людей от мошенников!', true);
 
+      let investmentStoryNegative = new dialogueScene(images.get('кафе'));
+      investmentStoryQuestions.nextNegativeScene = investmentStoryNegative;
+      investmentStoryNegative.AddLine('Валера обескуражен', "Это было ему уроком");
+      investmentStoryNegative.AddLine('Валера счастлив', "Кажется, тебе звонят!");
+      investmentStoryNegative.AddLine('Даша с телефоном', "Алло!", true);
+      investmentStoryNegative.AddLine('мошенник', 'Здравствуйте, я по ошибке перевел вам деньги на карту, можете, пожалуйста, посмотреть пришла ли вам смс-ка и отправить деньги обратно?', true);
+      investmentStoryNegative.AddLine('Даша с телефоном', 'Сейчас посмотрю!', true);
+
+      let investmentStoryPositive = new dialogueScene(images.get('кафе'));
+      investmentStoryQuestions.nextPositiveScene = investmentStoryPositive;
+      investmentStoryPositive.AddLine('Валера счастлив', "Это было забавно");
+      investmentStoryPositive.AddLine('Валера счастлив', "Кажется, тебе звонят!");
+      investmentStoryPositive.AddLine('Даша с телефоном', "Алло!", true);
+      investmentStoryPositive.AddLine('мошенник', 'Здравствуйте, я по ошибке перевел вам деньги на карту, можете, пожалуйста, посмотреть пришла ли вам смс-ка и отправить деньги обратно?', true);
+      investmentStoryPositive.AddLine('Даша с телефоном', 'Сейчас посмотрю!', true);
+
+      let historyOfErroneousTransfersQuestions = new questionScene(images.get('кафе'));
+      investmentStoryPositive.nextScene = historyOfErroneousTransfersQuestions;
+      investmentStoryNegative.nextScene = historyOfErroneousTransfersQuestions;
+      historyOfErroneousTransfersQuestions.AddAnswer('Посмотреть смс-ку, убедиться что все верно и перевести деньги обратно', 'Вас обманули!');
+      historyOfErroneousTransfersQuestions.AddAnswer('Посмотреть историю переводов в личном кабинете', 'Такого перевода на самом деле не было, вы сохранили деньги!', true);
 
       currentScene = startScene;
     }
   }
 }
 
-currentScene = new startScene();
+class menuButton{
+  constructor(y, title, nextScene){
+    this.title = title;
+    this.nextScene = nextScene;
+    this.y = y;
+    this.color = messageBackgroundColor;
+    this.borderColor = messageBorderColor;
+  }
+}
+
+class menu extends sceneBase{
+  constructor(){
+    let background = images.get("меню");
+    super(background);
+
+    this.buttons = new Array();
+
+    this.point = gameHeight/100;
+    
+    this.buttonsWidth = this.point * 300;
+    this.padding = this.point * 250;
+    console.log(gameWidth);
+    this.distanceBetweenButtons = window.innerWidth * 0.01;
+    
+    
+    this.buttonsPadding = window.innerWidth * 0.01;
+
+    this.buttonsHeight = this.buttonsPadding * 2 + 18 * 2;
+
+    let startButton = new menuButton(40, "Играть!", new startScene());
+    this.buttons.push(startButton);
+  }
+
+  drawButtons(){
+    for(let i = 0; i < this.buttons.length; i++){
+      this.drawButton(this.buttons[i]);
+    }
+  }
+
+  drawButton(button){
+    this.point = gameHeight/100;
+    
+    this.buttonsWidth = this.point * 30;
+    this.padding = this.point * 10;
+    this.leftPadding = gameWidth/2 - this.buttonsWidth/2 - 7 * this.point;
+    let padding = this.buttonsPadding;
+    this.buttonsHeight = padding*2 + 18;
+    
+    context.strokeStyle = button.borderColor;
+    context.fillStyle = button.color;
+    context.fill(new Path2D(roundedRectPath(this.leftPadding, button.y * this.point, this.buttonsWidth, this.buttonsHeight, 10)));
+    context.stroke(new Path2D(roundedRectPath(this.leftPadding, button.y * this.point, this.buttonsWidth, this.buttonsHeight, 10)));
+    wrapText(button.title, this.leftPadding + padding, button.y * this.point + padding + 18, this.buttonsWidth - padding, 18);
+  }
+
+  draw(){
+    this.drawBackground();
+    this.drawButtons();
+  }
+
+  onClick(x,y){
+    for(let i = 0; i < this.buttons.length; i++){
+      let buttonY = this.buttons[i].y * this.point;
+
+      if(y >= buttonY && y <= buttonY + this.buttonsHeight && x >= this.leftPadding && x <= this.leftPadding + this.buttonsWidth){
+        currentScene = this.buttons[i].nextScene;
+      }
+    }
+  }
+}
+
+currentScene = new menu();
